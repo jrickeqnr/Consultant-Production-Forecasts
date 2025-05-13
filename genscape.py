@@ -566,39 +566,24 @@ def add_calculated_regions(df):
     return result_df
 
 def main():
-    """Main function to run the script"""
+    """Main function to fetch and process Genscape data"""
     try:
-        # Print diagnostic information
-        print("Script started. Checking environment...")
-        print(f"Script directory: {script_dir}")
-        print(f"Output directory: {output_dir}")
-        print(f"Files in output directory: {os.listdir(output_dir)}")
-        
         # Load configuration
+        logger.info("Loading configuration...")
         config = load_config()
         
         if not config:
-            print("Failed to load configuration. See logs for details.")
-            return
-            
-        print("Configuration loaded successfully.")
+            return pd.DataFrame()
         
-        # Get API key and start date from config
-        api_key = config.get("api_key")
-        start_date = config.get("start_date", "2019-12-01")  # Default if not specified
+        # Initialize API client
+        client = OilForecastAPI(config["api_key"])
         
-        # Initialize the API client
-        client = OilForecastAPI(api_key)
-        
-        # Get all forecasts since the configured start date, one per month
-        logger.info(f"Fetching monthly forecasts since {start_date}")
-        
-        # Get one report date per month
-        report_dates = client.get_report_dates(start_date)
+        # Get report dates based on start date
+        report_dates = client.get_report_dates(config.get("start_date"))
         
         if not report_dates:
-            logger.error("No valid report dates found. Exiting.")
-            return
+            logger.error("No report dates available. Exiting.")
+            return pd.DataFrame()
             
         # Get forecast data for each report date
         all_data = []
@@ -614,7 +599,7 @@ def main():
         
         if not all_data:
             logger.error("No forecast data retrieved. Exiting.")
-            return
+            return pd.DataFrame()
         
         # Combine all data
         combined_df = pd.concat(all_data, ignore_index=True)
@@ -627,22 +612,17 @@ def main():
         logger.info("Adding calculated region columns")
         wide_format = add_calculated_regions(wide_format)
         
-        # Save to CSV in the correct output directory
-        output_filename = f"oil_production_forecasts_genscape_{datetime.now().strftime('%Y%m%d')}.csv"
-        output_file_path = os.path.join(output_dir, output_filename)
-        
-        logger.info(f"Saving data to {output_file_path}")
-        wide_format.to_csv(output_file_path, index=False)
-        
         logger.info(f"Process completed successfully. Retrieved {len(wide_format)} forecast rows.")
-        print(f"Process completed successfully. Output saved to {output_file_path}")
+        return wide_format
+        
     except Exception as e:
         logger.error(f"An error occurred during execution: {str(e)}")
         # Print stacktrace for debugging
         import traceback
         logger.error(traceback.format_exc())
-        print(f"An error occurred: {str(e)}")
-        print("See logs for detailed error information.")
+        return pd.DataFrame()
 
 if __name__ == "__main__":
-    main()
+    df = main()
+    print("\nPreview of the data:")
+    print(df.head())

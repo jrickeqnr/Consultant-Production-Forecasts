@@ -464,13 +464,13 @@ def load_config(config_file="config.json"):
 
 
 def main():
-    """Main execution function"""
+    """Main execution function that returns a DataFrame of Energy Aspects forecasts"""
     try:
         # Load configuration
         config = load_config()
         
         if not config:
-            return
+            return pd.DataFrame()
             
         # Get API key and start date from config
         api_key = config.get("api_key")
@@ -491,20 +491,15 @@ def main():
         execution_time = time.time() - start_time
         
         if not forecasts_df.empty:
-            # Save to CSV
-            output_file = f"energy_aspects_monthly_forecasts_{datetime.now().strftime('%Y%m%d')}.csv"
-            forecasts_df.to_csv(output_file, index=False)
-            logger.info(f"Forecasts saved to {output_file}")
             logger.info(f"Data shape: {forecasts_df.shape}")
             logger.info(f"Total execution time: {execution_time:.2f} seconds")
-            
-            # Display first few rows
-            logger.info("\nPreview of the data:")
-            logger.info(f"\n{forecasts_df.head()}")
+            return forecasts_df
         else:
-            logger.warning("No data to save.")
+            logger.warning("No data to return.")
+            return pd.DataFrame()
     except Exception as e:
         logger.error(f"Error in main execution: {str(e)}")
+        return pd.DataFrame()
 
 
 if __name__ == "__main__":

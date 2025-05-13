@@ -85,7 +85,7 @@ class AzureSQLConnector:
         self.close()
 
 def process_eia_data():
-    """Main function to process EIA data and generate wide format output"""
+    """Main function to process EIA data and return DataFrame in wide format"""
     # Initialize connector
     connector = AzureSQLConnector()
 
@@ -147,7 +147,9 @@ def process_eia_data():
             index=['reportDate', 'month'],
             columns='location',
             values='value'
-        ).reset_index()        # Reformat dates to YYYY-MM
+        ).reset_index()
+
+        # Reformat dates to YYYY-MM
         eia_df_wide['reportDate'] = pd.to_datetime(eia_df_wide['reportDate']).dt.strftime('%Y-%m')
         eia_df_wide['month'] = pd.to_datetime(eia_df_wide['month']).dt.strftime('%Y-%m')
 
@@ -155,21 +157,16 @@ def process_eia_data():
         desired_order = ['reportDate', 'month'] + sorted(location_mapping.values())
         eia_df_wide = eia_df_wide[desired_order]
 
-        # Save to CSV
-        output_file = f"oil_production_forecasts_eia_{datetime.now().strftime('%Y%m%d')}.csv"
-        eia_df_wide.to_csv(output_file, index=False)
-        print(f"Data saved to {output_file}")
-
-        # Display results
-        print("\nPreview of the processed data:")
-        print(eia_df_wide)
+        return eia_df_wide
 
     except Exception as e:
         logging.error(f"Error processing EIA data: {str(e)}")
-        raise
+        return pd.DataFrame()
 
     finally:
         connector.close()
 
 if __name__ == "__main__":
-    process_eia_data()
+    df = process_eia_data()
+    print("\nPreview of the processed data:")
+    print(df)
