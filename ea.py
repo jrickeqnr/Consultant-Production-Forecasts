@@ -7,6 +7,7 @@ import logging
 import urllib3
 import time
 from typing import Dict, Any, List
+from pyspark.dbutils import DBUtils  # Add Databricks secrets support
 
 # Configure logging
 logging.basicConfig(
@@ -18,6 +19,13 @@ logger = logging.getLogger(__name__)
 # Disable SSL warnings globally
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logger.warning("SSL certificate verification is disabled. Use with caution.")
+
+# Initialize DBUtils for Databricks environment
+try:
+    dbutils = DBUtils()
+except Exception as e:
+    dbutils = None
+    logger.warning(f"Failed to initialize DBUtils. This is expected in non-Databricks environments: {str(e)}")
 
 # Dictionary of locations
 LOCATION_MAPPING = {
@@ -62,14 +70,29 @@ LOCATION_MAPPING = {
 class EnergyAspectsAPI:
     """Client for Energy Aspects API with rate limiting and retry capabilities"""
     
-    def __init__(self, api_key: str):
+    def __init__(self, environment: str = 'prod', config_path: str = 'config.json'):
         """
         Initialize the API client
         
         Args:
-            api_key: API key for authentication
+            environment: Environment to use ('prod' or 'dev')
+            config_path: Path to config file (used as fallback if not in Databricks)
         """
-        self.api_key = api_key
+        # Try to get API key from Databricks secrets first
+        try:
+            if dbutils:
+                self.api_key = dbutils.secrets.get(scope=f"{environment}_API_Scope", key="energy-aspects-api-key")
+                logger.info("Successfully loaded API key from Databricks secrets")
+            else:
+                # Fall back to config file if not in Databricks environment
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    self.api_key = config['ea']['api_key']
+                logger.info("Loaded API key from config file")
+        except Exception as e:
+            logger.error(f"Failed to load API key: {str(e)}")
+            raise
+            
         self.base_url = "https://api.energyaspects.com/data"
         
         # Rate limiting parameters

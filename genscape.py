@@ -6,6 +6,7 @@ import logging
 import json
 from typing import List, Dict, Any, Optional
 import os
+from pyspark.dbutils import DBUtils  # Add Databricks secrets support
 
 # Configure logging
 logging.basicConfig(
@@ -49,23 +50,45 @@ logger.info(f"Parent directory: {script_parent_dir}")
 logger.info(f"Running from subfolder: {running_from_subfolder}")
 logger.info(f"Using output directory: {output_dir}")
 
+# Initialize DBUtils for Databricks environment
+try:
+    dbutils = DBUtils()
+except Exception as e:
+    dbutils = None
+    logger.warning(f"Failed to initialize DBUtils. This is expected in non-Databricks environments: {str(e)}")
+
 class OilForecastAPI:
     """Client for accessing the Genscape Oil Production and Forecasting API"""
     
     BASE_URL = "https://api.genscape.com/oil-production-forecasting"
     ENDPOINT = "/v1/us-oil-production-forecast/monthly"
     
-    def __init__(self, api_key: str):
+    def __init__(self, environment: str = 'prod', config_path: str = 'config.json'):
         """
         Initialize the API client
         
         Args:
-            api_key: API key for authentication
+            environment: Environment to use ('prod' or 'dev')
+            config_path: Path to config file (used as fallback if not in Databricks)
         """
-        self.api_key = api_key
+        # Try to get API key from Databricks secrets first
+        try:
+            if dbutils:
+                self.api_key = dbutils.secrets.get(scope=f"{environment}_API_Scope", key="genscape-api-key")
+                logger.info("Successfully loaded API key from Databricks secrets")
+            else:
+                # Fall back to config file if not in Databricks environment
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    self.api_key = config['genscape']['api_key']
+                logger.info("Loaded API key from config file")
+        except Exception as e:
+            logger.error(f"Failed to load API key: {str(e)}")
+            raise
+
         self.headers = {
             "Accept": "application/json",
-            "Gen-Api-Key": f"{api_key}"
+            "Gen-Api-Key": f"{self.api_key}"
         }
         # Rate limiting settings
         self.request_count = 0
