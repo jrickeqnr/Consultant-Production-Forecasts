@@ -147,11 +147,9 @@ def process_eia_data():
             index=['reportDate', 'month'],
             columns='location',
             values='value'
-        ).reset_index()
-
-        # Reformat dates to MMM-YY
-        eia_df_wide['reportDate'] = pd.to_datetime(eia_df_wide['reportDate']).dt.strftime('%b-%y')
-        eia_df_wide['month'] = pd.to_datetime(eia_df_wide['month']).dt.strftime('%b-%y')
+        ).reset_index()        # Reformat dates to YYYY-MM
+        eia_df_wide['reportDate'] = pd.to_datetime(eia_df_wide['reportDate']).dt.strftime('%Y-%m')
+        eia_df_wide['month'] = pd.to_datetime(eia_df_wide['month']).dt.strftime('%Y-%m')
 
         # Reorder columns
         desired_order = ['reportDate', 'month'] + sorted(location_mapping.values())

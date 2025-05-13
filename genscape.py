@@ -395,12 +395,11 @@ class OilForecastAPI:
         # Before formatting, save original dates for sorting
         df["reportDate_orig"] = df["reportDate"]
         df["month_orig"] = df["month"]
+          # Convert reportDate to YYYY-MM format
+        df["reportDate"] = df["reportDate"].dt.strftime("%Y-%m")
         
-        # Convert reportDate to MMM-YY format
-        df["reportDate"] = df["reportDate"].dt.strftime("%b-%y")
-        
-        # Convert month to MMM-YY format as well
-        df["month"] = df["month"].dt.strftime("%b-%y")
+        # Convert month to YYYY-MM format as well
+        df["month"] = df["month"].dt.strftime("%Y-%m")
         
         # Pivot to get subregions as columns
         try:

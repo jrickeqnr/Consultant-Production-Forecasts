@@ -417,19 +417,17 @@ def fetch_monthly_forecasts(api_client: EnergyAspectsAPI, start_date: str, debug
         
         # Extract just the date part from ReleaseDate for display
         df['ReleaseDate'] = pd.to_datetime(df['ReleaseDate']).dt.date
+          # Convert dates to YYYY-MM format and rename columns
+        df['month'] = df['Date'].dt.strftime('%Y-%m')
+        df['reportDate'] = df['ReleaseMonth']
         
-        # Convert Date to monthly format (YYYY-MM)
-        df['Month'] = df['Date'].dt.strftime('%Y-%m')
-        
-        # Reorder columns
-        first_cols = ['ReleaseMonth', 'ReleaseDate', 'Month', 'Date']
-        other_cols = [col for col in df.columns if col not in first_cols]
+        # Reorder and drop columns
+        first_cols = ['reportDate', 'month']
+        other_cols = [col for col in df.columns if col not in first_cols + ['ReleaseMonth', 'ReleaseDate', 'Date']]
         df = df[first_cols + other_cols]
         
-        # Sort by release date and then by data date
-        df = df.sort_values(['ReleaseMonth', 'Month'])
-        df = df.drop(columns=['ReleaseDate', 'Date'])
-        df = df.rename(columns={'Month': 'Date'})
+        # Sort by report date and then by data date
+        df = df.sort_values(['reportDate', 'month'])
         return df
     else:
         logger.warning("No data was collected.")
