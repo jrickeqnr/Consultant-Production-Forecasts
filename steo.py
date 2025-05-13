@@ -134,8 +134,9 @@ def process_eia_data():
             'COPRPUS': 'Total US',
             'COPRR48': 'Rest of Lower 48',
             'PAPR48NGOM': 'Lower 48 (excl GOM)',
-            'PAPRPAK': 'PAPRPAK',
+            'PAPRPAK': 'Alaska',
             'PAPRPGLF': 'Gulf of Mexico'
+
         }
 
         # Group and apply mappings
