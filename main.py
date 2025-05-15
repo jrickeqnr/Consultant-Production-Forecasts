@@ -2,11 +2,13 @@ import pandas as pd
 from datetime import datetime
 import logging
 from typing import Dict
+from pyspark.sql import SparkSession
 
 # Import the processing functions from each module
 from ea import main as ea_main
 from genscape import main as genscape_main
 from steo import process_eia_data
+from write import SQLWriter
 
 # Set up logging
 logging.basicConfig(
@@ -46,6 +48,11 @@ def main():
     """Main function to process and combine all forecast sources"""
     try:
         logger.info("Starting forecast data collection and processing...")
+        
+        # Initialize Spark session
+        spark = SparkSession.builder \
+            .appName("Production Forecasts") \
+            .getOrCreate()
         
         # Process Energy Aspects data
         logger.info("Processing Energy Aspects data...")
@@ -90,16 +97,24 @@ def main():
         # Sort the DataFrame
         combined_df = combined_df.sort_values(['source', 'reportDate', 'month', 'location'])
         
-        # Save the final combined DataFrame
-        output_file = f"combined_forecasts_{datetime.now().strftime('%Y%m%d')}.csv"
-        combined_df.to_csv(output_file, index=False)
-        logger.info(f"Combined forecasts saved to {output_file}")
+        # Initialize SQL writer
+        sql_writer = SQLWriter()
+        
+        # Convert pandas DataFrame to Spark DataFrame
+        spark_df = spark.createDataFrame(combined_df)
+        
+        # Write data to SQL database
+        logger.info("Writing data to SQL database...")
+        sql_writer.write_to_sql(spark_df)
         
         # Display summary statistics
         logger.info("\nSummary of combined data:")
         logger.info(f"Total rows: {len(combined_df)}")
         logger.info("\nRows per source:")
         print(combined_df.groupby('source').size())
+        
+        # Clean up Spark session
+        spark.stop()
         
     except Exception as e:
         logger.error(f"Error in main execution: {str(e)}", exc_info=True)
