@@ -151,7 +151,7 @@ def process_eia_data():
             'COPREF': 'Eagle Ford',
             'COPRHA': 'Haynesville',
             'COPRPM': 'Permian',
-            'COPRPUS': 'Total US',
+            'COPRPUS': 'U.S.', # United States
             'COPRR48': 'Rest of Lower 48',
             'PAPR48NGOM': 'Lower 48 (excl GOM)',
             'PAPRPAK': 'Alaska',

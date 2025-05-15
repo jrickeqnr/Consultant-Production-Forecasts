@@ -526,10 +526,10 @@ def add_calculated_regions(df):
     # Create Permian Basin
     permian_regions = ["Permian New Mexico", "Texas Dist 7C", "Texas Dist 8", "Texas Dist 8A"]
     if all(region in result_df.columns for region in permian_regions):
-        result_df["Permian Basin"] = result_df[permian_regions].sum(axis=1)
-        logger.info("Added 'Permian Basin' column")
+        result_df["Permian"] = result_df[permian_regions].sum(axis=1)
+        logger.info("Added 'Permian' column")
     else:
-        logger.warning(f"Could not create 'Permian Basin' column: missing one or more required source columns: {permian_regions}")
+        logger.warning(f"Could not create 'Permian' column: missing one or more required source columns: {permian_regions}")
     
     # Create Gulf of Mexico
     gulf_regions = ["Gulf of Mexico - Deepwater", "Gulf of Mexico - Shelf"]
@@ -581,10 +581,10 @@ def add_calculated_regions(df):
     
     # Rename United States to Total US
     if "United States" in result_df.columns:
-        result_df = result_df.rename(columns={"United States": "Total US"})
-        logger.info("Renamed 'United States' column to 'Total US'")
+        result_df = result_df.rename(columns={"United States": "U.S."})
+        logger.info("Renamed 'United States' column to 'U.S.'")
     else:
-        logger.warning("Could not rename 'United States' to 'Total US': column not found")
+        logger.warning("Could not rename 'United States' to 'U.S.': column not found")
     
     return result_df
 
